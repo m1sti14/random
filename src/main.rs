@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::collections::HashMap;
 use macroquad::prelude::*;
 
@@ -12,6 +13,19 @@ enum PromptType {
     Subject,
     Modifier
 }
+
+enum GameStates {
+    MainMenu,
+    SubjectSelection,
+    Birds,
+    Fish,
+    Bugs,
+    Humans,
+    Modifiers,
+    Random
+}
+
+
 
 #[derive(Clone)]
 struct Shape {
@@ -133,6 +147,10 @@ impl Shape {
     }
 }
 
+impl GameStates {
+
+}
+
 
 // Check for collisions
 fn check_collision(a: &Shape, b: &Shape) -> Option<(Vec2, f32)> {
@@ -173,13 +191,64 @@ fn match_mouse(mouse_x: f32, mouse_y: f32, shapes: Vec<Shape>) -> Option<usize> 
     None
 }
 
+// Function to scan for new releases
+async fn check_for_updates() -> Result<(), Box<dyn Error>> {
+    // 1. Configure the updater
+    let status = self_update::backends::github::Update::configure()
+        .repo_owner("m1sti14")
+        .repo_name("random.exe")
+        .bin_name("prompts.exe") // The name of the binary inside the release asset
+        .show_download_progress(true)
+        .current_version(env!("CARGO_PKG_VERSION"))
+        .build()?;
 
+    // 2. Check the latest release version
+    let latest = status.get_latest_release()?;
+
+    // 3. Compare and apply update if newer
+    if self_update::version::bump_is_greater(env!("CARGO_PKG_VERSION"), &latest.version)? {
+        println!("New version {} found! Downloading...", latest.version);
+        status.update()?;
+        println!("Update successful! Please restart the application.");
+        std::process::exit(0);
+    } else {
+        println!("Application is up-to-date (v{}).", env!("CARGO_PKG_VERSION"));
+    }
+
+    Ok(())
+}
 
 
 #[macroquad::main(window_configuration)]
 async fn main() {
+    if let Err(e) = check_for_updates().await {
+        eprintln!("Update check failed: {}", e);
+    }
+
     let mut start = false;
     // Create lists of prompts
+    let bird_list: [&str; 20] = ["Grackle ",
+        "Cardinal ",
+        "Robin ",
+        "Parrot ",
+        "Parakeet ",
+        "Mourning Dove ",
+        "Owl ",
+        "Goldfinch ",
+        "Falcon ",
+        "Crane ",
+        "Vulture ",
+        "Woodpecker ",
+        "Hummingbird ",
+        "Cuckoo ",
+        "Duck ",
+        "Warbler ",
+        "Crow ",
+        "Raven ",
+        "Eagle ",
+        "Partridge "];
+
+
     let subject_list: [&str; 20] = ["One flower ",
         "A field of flowers ",
         "A man ",
